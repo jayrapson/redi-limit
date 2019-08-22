@@ -1,4 +1,3 @@
--- sliding_window
 -- This basic Lua script attempts to build up a list of relevant requests grouped by
 -- a specific key. If the number of requests allowed by 'rate' is reached, it will
 -- check to see whether it's within the relevant window. If so, the number of seconds
@@ -13,8 +12,8 @@ local limit_key = identifier .. '_limit'
 
 -- Check whether this key is already limited
 -- If currently limited, return the amount of time until the limit is lifted
--- This is used as both a shortcut response and a guard to avoid users 
--- retrying the system while restricted from being endlessly rate limited
+-- This is used as both a shortcut response and a guard to avoid users retrying the 
+-- system while restricted from being endlessly rate limited
 if redis.call('EXISTS', limit_key) > 0 then
   return redis.call('TTL', limit_key)
 end
@@ -25,7 +24,8 @@ redis.call('LPUSH', identifier, now)
 -- Set this list to expire outside the window if no more requests are made
 redis.call('EXPIRE', identifier, window)
 
--- If we don't have enough records yet, return nil
+-- If we don't have enough records yet, there's no need to check whether we're rate
+-- limiting this request
 if redis.call('LLEN', identifier) <= rate then
   return nil
 end
@@ -50,7 +50,7 @@ if valid_timeframe > now then
   -- Calculate the number of seconds until the limit is revoked
   local revoke_limit_timeframe = valid_timeframe - now
 
-  -- Set the key to expire when the limit is revoked
+  -- Set the limit key to expire when the limit is revoked
   redis.call('EXPIRE', limit_key, revoke_limit_timeframe)
 
   return revoke_limit_timeframe

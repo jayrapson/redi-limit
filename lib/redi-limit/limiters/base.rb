@@ -30,14 +30,14 @@ module RediLimit
       end
     end
 
-    # Check whether the request should be limited, and if so 
+    # Check whether the request should be limited, and if so return the appropriate rate limit message
     # In the default case we return a normal response and continue down the pipeline
     def limit(env)
       app.call(env)
     end
 
-    # Check whether this rule should be checked at all, or just skipped over. This is where you'd
-    # begin to implement more complex rules (i.e. only limiting specific authenticated endpoints)
+    # Test whether this rule should be checked, or just skipped over. This is where you begin to implement 
+    # more complex rules (i.e. only limiting specific authenticated endpoints)
     def skip?(env)
       false
     end
@@ -50,6 +50,7 @@ module RediLimit
         if e.message.match(/NOSCRIPT/)
           # In this case, the script isn't available due to a redis restart or failure, we can add 
           # reload the script and try again. See https://redis.io/commands/eval
+          # If this doesn't resolve the issue, just let the exception bubble up
           load_script!
           redis.evalsha(script_id, argv: args)
         else
@@ -60,7 +61,7 @@ module RediLimit
 
     protected
 
-    # Produce a rate limited response for this request
+    # Build a rate limited response
     def restrict(message, identifier, headers = {})
       logger.warn("#{self.class.name} limited #{identifier} with '#{message}'")
       [LIMIT_HTTP_CODE, headers, [message]]
@@ -68,14 +69,18 @@ module RediLimit
 
     # Specify a custom Lua script to be loaded into the redis cluster
     # I'm on the fence about using NotImplementedError to create abstract methods, though this is often 
-    # used for this purpose, the intention behind it is meant to be quite different. The other popular
-    # options of not defining the method on the base class at all, or raising a generic error, don't sit 
-    # well with me either.
+    # used for this purpose, the intention behind the error is meant to be quite different. The other 
+    # popular options of not defining the method on the base class at all, or raising a generic error, 
+    # don't sit well with me either.
     def script_name
       raise NotImplementedError
     end
 
-    # Some simple helpers 
+    # Configure Redis client for easy access, in a production environment this would be configured with 
+    # SSL and the relevant secrets.
+    def redis
+      @redis ||= Redis.new(host: RediLimit.configuration.redis_host)
+    end
 
     def hash(v)
       OpenSSL::Digest::SHA1.hexdigest(v)
@@ -85,17 +90,11 @@ module RediLimit
       @logger ||= Logger.new(STDOUT)
     end
 
-    # Configure Redis client for easy access, in a production environment this would be configured with 
-    # SSL, a remote cluster, and the relevant secrets.
-    def redis
-      @redis ||= Redis.new(host: RediLimit.configuration.redis_host)
-    end
-
     private
 
-    # Preload the relevant Lua script into Redis and ensure we have the correct SHA
+    # Preload the relevant Lua script into Redis and ensure we have the correct SHA to reference
     def load_script!
-      # load the relative path to the script (as defined by subclasses)
+      # load the relative path to the script
       source = File.read(script_path)
       redis.script(:load, source)
 
