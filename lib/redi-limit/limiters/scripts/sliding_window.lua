@@ -25,34 +25,33 @@ redis.call('LPUSH', identifier, now)
 -- Set this list to expire outside the window if no more requests are made
 redis.call('EXPIRE', identifier, window)
 
+-- If we don't have enough records yet, return nil
+if redis.call('LLEN', identifier) <= rate then
+  return nil
+end
+
 -- Check whether they've exceeded the limit based on the furthest valid timestamp prior
 -- to this call
 local oldest = redis.call('LINDEX', identifier, rate)
 
 -- Trim the list to the relevant size to ensure we're not storing more than is required
--- We know at this point that these items are irrelevant, as they would have been 
--- rate limited 
+-- We know at this point that these items outside of the rate range are irrelevant, as 
+-- they would have otherwise been rate limited 
 redis.call('LTRIM', identifier, 0, rate - 1)
 
--- Check whether they have reached the number of requests required to rate limit
--- If 'oldest' exists in this case, they have reached the number of requests where 
--- they may be limited. If it is not present, no value will be returned from this
--- script
-if oldest then
-  -- Calculate the point in time where the entry would be old enough we could discard it
-  local valid_timeframe = oldest + window
+-- Calculate the point in time where the entry would be old enough we could discard it
+local valid_timeframe = oldest + window
 
-  -- If the point of time is in the future, we need to limit this request
-  if valid_timeframe > now then
-    -- Set a key which will limit further requests
-    redis.call('SET', limit_key, 1)
+-- If the point of time is in the future, we need to limit this request
+if valid_timeframe > now then
+  -- Set a key which will limit further requests
+  redis.call('SET', limit_key, 1)
 
-    -- Calculate the number of seconds until the limit is revoked
-    local revoke_limit_timeframe = valid_timeframe - now
+  -- Calculate the number of seconds until the limit is revoked
+  local revoke_limit_timeframe = valid_timeframe - now
 
-    -- Set the key to expire when the limit is revoked
-    redis.call('EXPIRE', limit_key, revoke_limit_timeframe)
+  -- Set the key to expire when the limit is revoked
+  redis.call('EXPIRE', limit_key, revoke_limit_timeframe)
 
-    return revoke_limit_timeframe
-  end
+  return revoke_limit_timeframe
 end
