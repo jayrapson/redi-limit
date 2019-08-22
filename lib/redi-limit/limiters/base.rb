@@ -1,6 +1,7 @@
 require 'redis'
 require 'openssl'
 require 'contracts'
+require_relative '../configuration'
 
 module RediLimit
   class Base
@@ -87,7 +88,7 @@ module RediLimit
     # Configure Redis client for easy access, in a production environment this would be configured with 
     # SSL, a remote cluster, and the relevant secrets.
     def redis
-      @redis ||= Redis.new(host: :localhost)
+      @redis ||= Redis.new(host: RediLimit.configuration.redis_host)
     end
 
     private

@@ -1,1 +1,2 @@
-require 'redi-limit/sliding_window'
+require 'redi-limit/configuration'
+require 'redi-limit/limiters/sliding_window'
