@@ -1,0 +1,1 @@
+require 'redi-limit/sliding_window'
