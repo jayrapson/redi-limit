@@ -1,7 +1,7 @@
 require 'logger'
 require 'rack'
 require 'redis'
-Dir[File.dirname(__FILE__) + '/../lib/*.rb'].each do |file| 
+Dir[File.dirname(__FILE__) + '/../lib/**/*.rb'].each do |file| 
   require file
 end
 
@@ -101,4 +101,8 @@ RSpec.configure do |config|
   # test failures related to randomization by passing the same `--seed` value
   # as the one that triggered the failure.
   Kernel.srand config.seed
+end
+
+RediLimit.configure do |config|
+  config.redis_host = :localhost
 end
