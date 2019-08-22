@@ -41,5 +41,5 @@ To run the test suite you must have access to a local redis, due to the use of e
 
 To run the included tests run:
 ```sh
-rspec
+bundle exec rspec
 ```
