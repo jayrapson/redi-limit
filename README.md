@@ -5,13 +5,13 @@ Middleware rate limiting using preloaded lua scripts in redis for rails
 This project was created as a quick time restricted coding challenge, if you stumble across this project, it is not ready for production use. Please don't attempt to use it in production. **Please don't.**
 
 ## Getting Started
-1. Add to your Gemfile and run the `bundle` command to install
+### 1. Add to your Gemfile and run the `bundle` command to install
 
 ```sh
 gem 'redi-limit', git: 'git@github.com:jayrapson/redi-limit.git'
 ```
 
-2. Configure your connection details in `config/initializers/redi-limit.rb`
+### 2. Configure your connection details in `config/initializers/redi-limit.rb`
 
 ```ruby
 RediLimit.configure do |config|
@@ -19,7 +19,7 @@ RediLimit.configure do |config|
 end
 ```
 
-3. Add the relevant rate limiter to middleware:
+### 3. Add the relevant rate limiter to middleware:
 
 ```ruby
 config.middleware.insert_before(0, RediLimit::SlidingWindow, 100, 1.hour, 'HTTP_AUTHORIZATION')
