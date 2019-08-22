@@ -1,4 +1,4 @@
-$LOAD_PATH.unshift(File.expand_path('../redi-limit/lib', __FILE__))
+$LOAD_PATH.unshift(File.expand_path('../lib/redi-limit', __FILE__))
 require 'version'
 
 Gem::Specification.new do |s|
