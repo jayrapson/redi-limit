@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "rspec", "~> 3.5"
 
   s.add_dependency 'contracts', '~> 0.16.0'
-  s.add_dependency 'rack', '~> 2.0'
+  s.add_dependency 'rack', '>= 2', '< 4'
   s.add_dependency 'redis', '~> 4.0'
 
   s.licenses = ['MIT']
